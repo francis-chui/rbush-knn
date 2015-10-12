@@ -42,50 +42,52 @@ function compareDist(a, b) {
  * Calculate the distance to a bounding box from point p
  */
 function boxDistance(p, box, algorithm) {
-	var d = Infinity;
-	var x1 = box[0], y1 = box[1], x2 = box[2], y2 = box[3];
-	var px = p[0], py = p[1];
-	
-	if(typeof algorithm === "undefined") algorithm = calcEuclidianSquaredDist;
-	
-	// if the point is inside the bbox, we can't be sure of their order so set distance to 0
-	if(px >= x1 && px <= x2 && py >= y1 && py <= y2) {
-		d = 0;
-	} else if (py >= y1 && py <= y2) { // not inside bbox but within y bounds
-		var x1EdgeMinDist = algorithm(p, [x1,py]);
-		var x2EdgeMinDist =  algorithm(p, [x2,py]);
-		
-		if(x1EdgeMinDist < x2EdgeMinDist) {
-			d = x1EdgeMinDist;
-		} else { // use x2 edge
-			d = x2EdgeMinDist;
-		}
-	
-	} else if (px >= x1 && px <= x2) { // not inside bbox but within x bounds
-		var y1EdgeMinDist = algorithm(p, [px,y1]);
-		var y2EdgeMinDist = algorithm(p, [px,y2]);
-		
-		if(y1EdgeMinDist < y2EdgeMinDist) {
-			d = y1EdgeMinDist;
-		} else { // use y2 edge
-			d = y2EdgeMinDist;
-		}
-	} else { // not within bbox nor either axis bounds so use the corners
-		var boxCornerDist = [
-			algorithm(target, [x1,y1]),
-			algorithm(target, [x1,y2]),
-			algorithm(target, [x2,y1]),
-			algorithm(target, [x2,y2])
-		].sort();
-		
-		d = boxCornerDist[0];
-	}
-	return d;
+    var d = Infinity;
+    var x1 = box[0], y1 = box[1], x2 = box[2], y2 = box[3];
+    var px = p[0], py = p[1];
+    
+    if(typeof algorithm === "undefined") algorithm = calcEuclidianSquaredDist;
+    
+    // if the point is inside the bbox, we can't be sure of their order so set distance to 0
+    if(px >= x1 && px <= x2 && py >= y1 && py <= y2) {
+        d = 0;
+    } else if (py >= y1 && py <= y2) { // not inside bbox but within y bounds
+        var x1EdgeMinDist = algorithm(p, [x1,py]);
+        var x2EdgeMinDist =  algorithm(p, [x2,py]);
+        
+        if(x1EdgeMinDist < x2EdgeMinDist) {
+            d = x1EdgeMinDist;
+        } else { // use x2 edge
+            d = x2EdgeMinDist;
+        }
+    
+    } else if (px >= x1 && px <= x2) { // not inside bbox but within x bounds
+        var y1EdgeMinDist = algorithm(p, [px,y1]);
+        var y2EdgeMinDist = algorithm(p, [px,y2]);
+        
+        if(y1EdgeMinDist < y2EdgeMinDist) {
+            d = y1EdgeMinDist;
+        } else { // use y2 edge
+            d = y2EdgeMinDist;
+        }
+    } else { // not within bbox nor either axis bounds so use the corners
+        var boxCornerDist = [
+            algorithm(target, [x1,y1]),
+            algorithm(target, [x1,y2]),
+            algorithm(target, [x2,y1]),
+            algorithm(target, [x2,y2])
+        ].sort(function (prev, curr) {
+            return prev - curr;
+        });
+        
+        d = boxCornerDist[0];
+    }
+    return d;
 }
 
 function calcEuclidianSquaredDist(a, b) {
-	var dx = a[0]-b[0], dy = a[1]-b[1];
-	return dx*dx+dy*dy;
+    var dx = a[0]-b[0], dy = a[1]-b[1];
+    return dx*dx+dy*dy;
 }
 
 /**
@@ -96,17 +98,17 @@ function calcEuclidianSquaredDist(a, b) {
 * returns the square of half the chord length beween a and b
 */
 function calcHaversineRelativeDist(a, b) {
-	var lat1 = a[1], lat2 = b[1];
-	var lon1 = a[0], lon2 = b[0];
+    var lat1 = a[1], lat2 = b[1];
+    var lon1 = a[0], lon2 = b[0];
 
-	var phi1 = lat1*Math.PI/180;
-	var phi2 = lat2*Math.PI/180;
-	var deltaPhi = (lat2-lat1)*Math.PI/180;
-	var deltaLambda = (lon2-lon1)*Math.PI/180;
+    var phi1 = lat1*Math.PI/180;
+    var phi2 = lat2*Math.PI/180;
+    var deltaPhi = (lat2-lat1)*Math.PI/180;
+    var deltaLambda = (lon2-lon1)*Math.PI/180;
 
-	return = Math.sin(deltaphi/2) * Math.sin(deltaPhi/2) +
-			Math.cos(phi1) * Math.cos(phi2) *
-			Math.sin(deltaLambda/2) * Math.sin(deltaLambda/2);
+    return = Math.sin(deltaphi/2) * Math.sin(deltaPhi/2) +
+            Math.cos(phi1) * Math.cos(phi2) *
+            Math.sin(deltaLambda/2) * Math.sin(deltaLambda/2);
 }
 
 /**
@@ -116,12 +118,12 @@ function calcHaversineRelativeDist(a, b) {
  * returns the arc angle in radians
  */
 function calcSphericalLawOfCosinesRelativeDist(a, b) {
-	var lat1 = a[1], lat2 = b[1];
-	var lon1 = a[0], lon2 = b[0];
-	var phi1 = lat1*Math.PI/180, phi2 = lat2*Math.PI/180, 
-		deltaLambda = (lon2-lon1)*Math.PI/180;
+    var lat1 = a[1], lat2 = b[1];
+    var lon1 = a[0], lon2 = b[0];
+    var phi1 = lat1*Math.PI/180, phi2 = lat2*Math.PI/180, 
+        deltaLambda = (lon2-lon1)*Math.PI/180;
 
-	return Math.acos(Math.sin(phi1)*Math.sin(phi2)+Math.cos(phi1)*Math.cos(phi2)*Math.cos(deltaLambda));
+    return Math.acos(Math.sin(phi1)*Math.sin(phi2)+Math.cos(phi1)*Math.cos(phi2)*Math.cos(deltaLambda));
 }
 
 /**
@@ -133,11 +135,11 @@ function calcSphericalLawOfCosinesRelativeDist(a, b) {
 * returns the square of the arc angle in radians
 */
 function calcEquirectangularRelativeDist(a, b) {
-	var lambda2 = Math.PI/180*b[0], lambda1 = Math.PI/180*a[0];
-	var phi2 = Math.PI/180*b[1], phi1 = Math.PI/180*a[1];
+    var lambda2 = Math.PI/180*b[0], lambda1 = Math.PI/180*a[0];
+    var phi2 = Math.PI/180*b[1], phi1 = Math.PI/180*a[1];
 
-	var x = (lambda2-lambda1) * Math.cos((phi1+phi2)/2);
-	var y = (phi2-phi1);
+    var x = (lambda2-lambda1) * Math.cos((phi1+phi2)/2);
+    var y = (phi2-phi1);
 
-	return x*x+y*y;
+    return x*x+y*y;
 }
